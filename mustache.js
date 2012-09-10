@@ -32,7 +32,7 @@ var Mustache;
   var nonSpaceRe = /\S/;
   var eqRe = /\s*=/;
   var curlyRe = /\s*\}/;
-  var tagRe = /#|\^|\/|>|\{|&|=|!/;
+  var tagRe = /#|\^|\/|>|<|\{|&|=|!/;
 
   // Workaround for https://issues.apache.org/jira/browse/COUCHDB-577
   // See https://github.com/janl/mustache.js/issues/189
@@ -273,6 +273,11 @@ var Mustache;
     return fn ? fn(context) : "";
   };
 
+  Writer.prototype._definePartial = function(name, context, callback) {
+    this.compilePartial(name, callback(this, context));
+    return "";
+  }
+
   Writer.prototype._name = function (name, context) {
     var value = context.lookup(name);
 
@@ -342,6 +347,9 @@ var Mustache;
         case ">":
           buffer += writer._partial(token[1], context);
           break;
+	case "<":
+	  buffer += writer._definePartial(token[1], context, subRender(i, token[4], template));
+	  break;
         case "&":
           buffer += writer._name(token[1], context);
           break;
@@ -388,6 +396,7 @@ var Mustache;
       switch (token[0]) {
       case "#":
       case "^":
+      case "<":
         token[4] = [];
         sections.push(token);
         collector.push(token);
